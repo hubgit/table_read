@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @param string $path     The path to the file to be read
+ * @param string $path     The path to the HTML file to be read
  * @param string $selector An XPath selector for the table
  *
  * @return Generator
