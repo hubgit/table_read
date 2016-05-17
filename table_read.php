@@ -19,6 +19,37 @@ function table_read($path, $selector = '//table')
 
     // select the table
     $table = $xpath->query($selector)->item(0);
+    
+    // pre-process each row
+    foreach ($xpath->query('tr', $table) as $row) {
+      // extend rowspans
+      foreach ($xpath->query('*[@rowspan]', $row) as $cell) {
+        $rowspan = $cell->getAttribute('rowspan');
+        $cell->removeAttribute('rowspan');
+
+        $nodes = $xpath->query(sprintf(
+          'following-sibling::tr[position() < %d]/*[%d]',
+          $rowspan,
+          $xpath->evaluate('count(preceding-sibling::*)', $cell) + 1
+        ), $row);
+
+        foreach ($nodes as $node) {
+          $clone = $cell->cloneNode(true);
+          $node->parentNode->insertBefore($clone, $node);
+        }
+      }
+
+      // extend colspans
+      foreach ($xpath->query('*[@colspan]', $row) as $cell) {
+        $colspan = $cell->getAttribute('colspan');
+        $cell->removeAttribute('colspan');
+
+        while (--$colspan) {
+          $clone = $cell->cloneNode(true);
+          $cell->parentNode->insertBefore($clone, $cell->nextSibling);
+        }
+      }
+    }
 
     // read keys from the table header
     $keys = array_map(function ($node) {
